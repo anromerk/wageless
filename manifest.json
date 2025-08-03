@@ -1,0 +1,28 @@
+// wageless - manifest.json
+
+{
+  "manifest_version": 2,
+  "name": "Wageless",
+  "version": "1.0",
+  "description": "Notifies you when new Amazon jobs are available.",
+  "permissions": [
+    "https://hiring.amazon.com/*",
+    "https://discord.com/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://hiring.amazon.com/*"
+      ],
+      "js": ["content.js"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon.png",
+    "48": "icons/icon.png",
+    "128": "icons/icon.png"
+  }
+}
