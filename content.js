@@ -2,7 +2,7 @@
 
 // ========== Configuration ==========
 const CONFIG = {
-  WEBHOOK_URL: "YOUR_DISCORD_WEBHOOK_URL_HERE",
+  WEBHOOK_URL: "https://discord.com/api/webhooks/1401958766177550517/BUdkzeSTzGW7_OTO1gWqw9IN7nN45B_cU590kIC3a4flDaqT2lqYjYAdNWezcv7W-On6",
   JOBS_URL: "https://hiring.amazon.com/app#/jobSearch",
   COUNT_SELECTOR: ".hvh-careers-emotion-tbniyc",
   NO_JOBS_SELECTOR: ".hvh-careers-emotion-4xlseg > b",
@@ -12,12 +12,41 @@ const CONFIG = {
 // ========== Helpers ==========
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
+function parseCountFromText(text) {
+  if (!text) return null;
+
+  const patterns = [
+    /Total\s+([\d,]+)\s+jobs?\s+found/i,
+    /Total\s*(?:of\s*)?([\d,]+)\s+jobs?\s+found/i,
+    /([\d,]+)\s+jobs?\s+found/i,
+    /Total\s+jobs?\s+found\s*[:\-]?\s*([\d,]+)/i
+  ];
+
+  for (const re of patterns) {
+    const m = text.match(re);
+    if (m) {
+      const num = parseInt((m[1] || "").replace(/,/g, ""), 10);
+      if (Number.isFinite(num)) return num;
+    }
+  }
+  return null;
+}
+
 function parseJobCount() {
   const el = document.querySelector(CONFIG.COUNT_SELECTOR);
-  if (!el) return null;
-  const text = el.textContent || "";
-  const match = text.match(/Total\s+(\d+)\s+jobs\s+found/i);
-  return match ? parseInt(match[1], 10) : null;
+  if (el) {
+    const count = parseCountFromText(el.textContent || "");
+    if (count !== null) return count;
+  }
+
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  let node;
+  while ((node = walker.nextNode())) {
+    const count = parseCountFromText(node.textContent || "");
+    if (count !== null) return count;
+  }
+
+  return null;
 }
 
 function hasNoJobsBanner() {
@@ -44,19 +73,20 @@ function runWatcherLoop() {
     console.log(`[Watcher] Attempt ${attempt}...`);
 
     const count = parseJobCount();
+
     if (count !== null) {
       if (lastCount === null) {
         lastCount = count;
-        console.log(`Initial count: ${count}`);
         sessionStorage.setItem("wageless_lastCount", count);
-        notifyDiscord(`Watcher started: ${count} jobs found – ${CONFIG.JOBS_URL}`);
+        console.log(`Initial count: ${count}`);
+        notifyDiscord(`Watcher started: ${count} job${count === 1 ? "" : "s"} found – ${CONFIG.JOBS_URL}`);
       } else if (count !== lastCount) {
         console.log(`Job count changed: ${lastCount} → ${count}`);
         lastCount = count;
         sessionStorage.setItem("wageless_lastCount", count);
-        notifyDiscord(`Job count changed: ${count} jobs – ${CONFIG.JOBS_URL}`);
+        notifyDiscord(`Job count changed: ${count} job${count === 1 ? "" : "s"} – ${CONFIG.JOBS_URL}`);
       } else {
-        console.log(`No change. Still ${count} jobs.`);
+        console.log(`No change. Still ${count} job${count === 1 ? "" : "s"}.`);
       }
     } else if (hasNoJobsBanner()) {
       if (lastCount !== 0) {
