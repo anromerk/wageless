@@ -2,7 +2,7 @@
 
 // ========== Configuration ==========
 const CONFIG = {
-  WEBHOOK_URL: "https://discord.com/api/webhooks/1401958766177550517/BUdkzeSTzGW7_OTO1gWqw9IN7nN45B_cU590kIC3a4flDaqT2lqYjYAdNWezcv7W-On6",
+  WEBHOOK_URL: "YOUR_DISCORD_WEBHOOK_URL_HERE",
   JOBS_URL: "https://hiring.amazon.com/app#/jobSearch",
   COUNT_SELECTOR: ".hvh-careers-emotion-tbniyc",
   NO_JOBS_SELECTOR: ".hvh-careers-emotion-4xlseg > b",
