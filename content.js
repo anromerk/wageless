@@ -6,7 +6,14 @@ const CONFIG = {
   JOBS_URL: "https://hiring.amazon.com/app#/jobSearch",
   COUNT_SELECTOR: ".hvh-careers-emotion-tbniyc",
   NO_JOBS_SELECTOR: ".hvh-careers-emotion-4xlseg > b",
-  CHECK_INTERVAL: 10000
+  CHECK_INTERVAL: 10000,
+  // ---- Mentions config ----
+  MENTIONS: {
+    enable: true,       // master toggle
+    everyone: false,    // true => allow @everyone/@here
+    userIds: [],        // e.g., ["123456789012345678"]
+    roleIds: []         // e.g., ["987654321098765432"]
+  }
 };
 
 // ========== Helpers ==========
@@ -54,11 +61,31 @@ function hasNoJobsBanner() {
   return !!(b && /Sorry,\s*there are no jobs available/i.test(b.textContent || ""));
 }
 
+function buildMentionPrefix() {
+  const tags = [];
+  if (CONFIG.MENTIONS.everyone) tags.push("@everyone");
+  for (const id of CONFIG.MENTIONS.userIds) tags.push(`<@${id}>`);
+  for (const id of CONFIG.MENTIONS.roleIds) tags.push(`<@&${id}>`);
+  return tags.length ? tags.join(" ") + " " : "";
+}
+
+function buildAllowedMentions() {
+  return {
+    parse: CONFIG.MENTIONS.everyone ? ["everyone"] : [],
+    users: CONFIG.MENTIONS.userIds,
+    roles: CONFIG.MENTIONS.roleIds
+  };
+}
+
 function notifyDiscord(message) {
+  const mentionPrefix = CONFIG.MENTIONS.enable ? buildMentionPrefix() : "";
   chrome.runtime.sendMessage({
     type: "discord_notify",
-    message,
-    webhook: CONFIG.WEBHOOK_URL
+    webhook: CONFIG.WEBHOOK_URL,
+    payload: {
+      content: `${mentionPrefix}${message}`,
+      allowed_mentions: CONFIG.MENTIONS.enable ? buildAllowedMentions() : { parse: [] }
+    }
   });
 }
 
